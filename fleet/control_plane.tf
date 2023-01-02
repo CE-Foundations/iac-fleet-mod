@@ -1,26 +1,37 @@
 // folder to contain fleet control plane folders and their associated projects
-resource "google_folder" "fleet_control_plane" {
-  display_name = "fleet-control-plane"
-  parent       = google_folder.fleet.name
+module "fleet_controlPlane" {
+  source   = "terraform-google-modules/folders/google"
+  version  = "3.1.0"
+  for_each = { for k, v in local.fleet_folders : k => v }
+  parent   = each.value["id"]
+  names    = ["fleet-control-plane"]
+
 }
 
 // below folders nest under fleet-control-plane
 // fleet control plane folder for security projects
-resource "google_folder" "fleet_control_plane_security" {
-  display_name = "security"
-  parent       = google_folder.fleet_control_plane.name
+module "fleet_control_plane_security" {
+  source   = "terraform-google-modules/folders/google"
+  version  = "3.1.0"
+  names    = ["security"]
+  for_each     = { for k, v in flatten([for b in module.fleet_controlPlane : b.ids_list]) : k => v }
+  parent       = each.value
 }
-
 // fleet control plane folder for network projects
-resource "google_folder" "fleet_control_plane_platform" {
-  display_name = "platform"
-  parent       = google_folder.fleet_control_plane.name
+module "fleet_control_plane_platform" {
+  source   = "terraform-google-modules/folders/google"
+  version  = "3.1.0"
+  names  = ["platform"]
+  for_each     = { for k, v in flatten([for b in module.fleet_controlPlane : b.ids_list]) : k => v }
+  parent       = each.value
 }
-
 // fleet control plane folder for observability projects
-resource "google_folder" "fleet_control_plane_observability" {
-  display_name = "observability"
-  parent       = google_folder.fleet_control_plane.name
+module "fleet_control_plane_observability" {
+  source   = "terraform-google-modules/folders/google"
+  version  = "3.1.0"
+  names = ["observability"]
+  for_each     = { for k, v in flatten([for b in module.fleet_controlPlane : b.ids_list]) : k => v }
+  parent       = each.value
 }
 
 // below projects nest under their associated control plane folder
@@ -32,7 +43,8 @@ module "control_plane_secrets_project" {
   name              = "${local.project_prefix}secrets"
   random_project_id = true
   org_id            = var.org_id
-  folder_id         = google_folder.fleet_control_plane_security.name
+  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_security : b.ids_list]) : k => v }
+  folder_id         = each.value
   billing_account   = var.billing_account_id
 
   activate_apis = [
@@ -49,7 +61,8 @@ module "control_plane_service_account_project" {
   name              = "${local.project_prefix}svc-accts"
   random_project_id = true
   org_id            = var.org_id
-  folder_id         = google_folder.fleet_control_plane_security.name
+  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_security : b.ids_list]) : k => v }
+  folder_id         = each.value
   billing_account   = var.billing_account_id
 
   activate_apis = local.edge_enable_services
@@ -63,7 +76,8 @@ module "control_plane_observability_project" {
   name              = "${local.project_prefix}observability"
   random_project_id = true
   org_id            = var.org_id
-  folder_id         = google_folder.fleet_control_plane_observability.name
+  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_observability : b.ids_list]) : k => v }
+  folder_id         = each.value
   billing_account   = var.billing_account_id
 
   activate_apis = [
@@ -80,7 +94,8 @@ module "control_plane_networking_project" {
   name              = "${local.project_prefix}network"
   random_project_id = true
   org_id            = var.org_id
-  folder_id         = google_folder.fleet_control_plane_platform.name
+  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_platform : b.ids_list]) : k => v }
+  folder_id         = each.value
   billing_account   = var.billing_account_id
 
   activate_apis = [
@@ -96,7 +111,8 @@ module "control_plane_sds_project" {
   name              = "${local.project_prefix}sds"
   random_project_id = true
   org_id            = var.org_id
-  folder_id         = google_folder.fleet_control_plane_platform.name
+  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_platform : b.ids_list]) : k => v }
+  folder_id         = each.value
   billing_account   = var.billing_account_id
 
   activate_apis = [

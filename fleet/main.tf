@@ -30,10 +30,16 @@ locals {
     "stackdriver.googleapis.com",
     "storage.googleapis.com"
   ]
+  fleet_folders = flatten([
+    for bd in data.terraform_remote_state.fleet_folders.outputs.fleet_folders : [for f in bd.folders_map : f]
+    ])
 }
 
 // create a folder that houses the fleet control plane and the fleet project. This folder should attach to a region folder.
-resource "google_folder" "fleet" {
-  display_name = "fleet-${var.fleet_name}"
-  parent       = var.fleet_parent_folder
+data "terraform_remote_state" "fleet_folders" {
+  backend = "gcs"
+  config = {
+    bucket = "ce-tf-backend"
+    prefix = "terraform/state/generic/3-org-structure/"
+  }
 }

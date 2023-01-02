@@ -3,13 +3,25 @@ variable "org_id" {
   type        = string
 }
 
-variable "fleet_name" {
-  type = string
-}
+# variable "fleet_name" {
+#   type = string
+# }
 
-variable "fleet_parent_folder" {
-  type        = string
-  description = "folder to which a new fleet deployment should attach"
+# variable "fleet_parent_folder" {
+#   type        = string
+#   description = "folder to which a new fleet deployment should attach"
+# }
+
+variable "fleet_controlPlane" {
+  description = "Map with a list of folder in control plane folder"
+  type        = map(any)
+  default = {
+    fleet-control-plane = [
+      "security",
+      "platform",
+      "observability"
+    ]
+  }
 }
 
 variable "billing_account_id" {
@@ -18,7 +30,7 @@ variable "billing_account_id" {
 
 variable "project_prefix" {
   type    = string
-  default = ""
+  default = "prj"
 }
 
 variable "fleet_subnet" {
@@ -84,4 +96,3 @@ variable "fleet_vpn_peer_config" {
     }
   }
 }
-
