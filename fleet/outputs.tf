@@ -20,3 +20,7 @@ output "control_plane_sds_project" {
 output "fleet_project" {
   value = module.fleet_project
 }
+
+output "test" {
+  value = module.vpc
+}
