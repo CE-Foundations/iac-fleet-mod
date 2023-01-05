@@ -31,15 +31,15 @@ locals {
     "storage.googleapis.com"
   ]
   fleet_folders = flatten([
-    for bd in data.terraform_remote_state.fleet_folders.outputs.fleet_folders : [for f in bd.folders_map : f]
+    for bd in var.fleet_folders : [for f in bd.folders_map : f]
     ])
 }
 
 // create a folder that houses the fleet control plane and the fleet project. This folder should attach to a region folder.
-data "terraform_remote_state" "fleet_folders" {
-  backend = "gcs"
-  config = {
-    bucket = "ce-tf-backend"
-    prefix = "terraform/state/generic/3-org-structure/"
-  }
-}
+# data "terraform_remote_state" "fleet_folders" {
+#   backend = "gcs"
+#   config = {
+#     bucket = "ce-tf-backend"
+#     prefix = "terraform/state/generic/3-org-structure/"
+#   }
+# }
