@@ -4,7 +4,7 @@ module "fleet_controlPlane" {
   version  = "3.1.0"
   for_each = { for k, v in local.fleet_folders : k => v }
   parent   = each.value["id"]
-  names    = ["fleet-control-plane"]
+  names    = ["${each.value["display_name"]}${var.suffix["control_plane_folder"]}"]
 
 }
 
@@ -13,25 +13,27 @@ module "fleet_controlPlane" {
 module "fleet_control_plane_security" {
   source   = "terraform-google-modules/folders/google"
   version  = "3.1.0"
-  names    = ["security"]
-  for_each     = { for k, v in flatten([for b in module.fleet_controlPlane : b.ids_list]) : k => v }
-  parent       = each.value
+  for_each     = { for k, v in flatten([for b in module.fleet_controlPlane : b]) : k => v }
+  names    = ["${trimsuffix(each.value.name, var.suffix["control_plane_folder"])}${var.suffix["security_folder"]}"]
+  parent       = each.value.id
 }
 // fleet control plane folder for network projects
 module "fleet_control_plane_platform" {
   source   = "terraform-google-modules/folders/google"
   version  = "3.1.0"
-  names  = ["platform"]
-  for_each     = { for k, v in flatten([for b in module.fleet_controlPlane : b.ids_list]) : k => v }
-  parent       = each.value
+  for_each     = { for k, v in flatten([for b in module.fleet_controlPlane : b]) : k => v }
+  
+  names  = ["${trimsuffix(each.value.name, var.suffix["control_plane_folder"])}${var.suffix["platform_folder"]}"]
+  parent       = each.value.id
 }
 // fleet control plane folder for observability projects
 module "fleet_control_plane_observability" {
   source   = "terraform-google-modules/folders/google"
   version  = "3.1.0"
-  names = ["observability"]
-  for_each     = { for k, v in flatten([for b in module.fleet_controlPlane : b.ids_list]) : k => v }
-  parent       = each.value
+  for_each     = { for k, v in flatten([for b in module.fleet_controlPlane : b]) : k => v }
+  
+  names = ["${trimsuffix(each.value.name, var.suffix["control_plane_folder"])}${var.suffix["observability_folder"]}"]
+  parent       = each.value.id
 }
 
 // below projects nest under their associated control plane folder
@@ -39,14 +41,13 @@ module "fleet_control_plane_observability" {
 module "control_plane_secrets_project" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 10.1"
-
-  name              = "${local.project_prefix}secrets"
+  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_security : b]) : k => v }
+  
+  name              = lower("${trimsuffix(each.value.name, var.suffix["security_folder"])}${var.suffix["secrets_project"]}")
   random_project_id = true
   org_id            = var.org_id
-  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_security : b.ids_list]) : k => v }
-  folder_id         = each.value
+  folder_id         = each.value.id
   billing_account   = var.billing_account_id
-
   activate_apis = [
     "cloudbilling.googleapis.com",
     "secretmanager.googleapis.com",
@@ -57,14 +58,13 @@ module "control_plane_secrets_project" {
 module "control_plane_service_account_project" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 10.1"
+  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_security : b]) : k => v }
 
-  name              = "${local.project_prefix}svc-accts"
+  name              = lower("${trimsuffix(each.value.name, var.suffix.security_folder)}${var.suffix["sa_project"]}")
   random_project_id = true
   org_id            = var.org_id
-  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_security : b.ids_list]) : k => v }
-  folder_id         = each.value
+  folder_id         = each.value.id
   billing_account   = var.billing_account_id
-
   activate_apis = local.edge_enable_services
 }
 
@@ -72,14 +72,13 @@ module "control_plane_service_account_project" {
 module "control_plane_observability_project" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 10.1"
+  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_observability : b]) : k => v }
 
-  name              = "${local.project_prefix}observability"
+  name              = lower("${trimsuffix(each.value.name, var.suffix["observability_folder"])}${var.suffix["observability_project"]}")
   random_project_id = true
   org_id            = var.org_id
-  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_observability : b.ids_list]) : k => v }
-  folder_id         = each.value
+  folder_id         = each.value.id
   billing_account   = var.billing_account_id
-
   activate_apis = [
     "cloudbilling.googleapis.com",
     "monitoring.googleapis.com",
@@ -90,14 +89,13 @@ module "control_plane_observability_project" {
 module "control_plane_networking_project" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 10.1"
+  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_platform : b]) : k => v }
 
-  name              = "${local.project_prefix}network"
+  name              = lower("${trimsuffix(each.value.name, var.suffix["platform_folder"])}${var.suffix["network_project"]}")
   random_project_id = true
   org_id            = var.org_id
-  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_platform : b.ids_list]) : k => v }
-  folder_id         = each.value
+  folder_id         = each.value.id
   billing_account   = var.billing_account_id
-
   activate_apis = [
     "cloudbilling.googleapis.com",
     "compute.googleapis.com"
@@ -107,14 +105,13 @@ module "control_plane_networking_project" {
 module "control_plane_sds_project" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 10.1"
+  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_platform : b]) : k => v }
 
-  name              = "${local.project_prefix}sds"
+  name              = lower("${trimsuffix(each.value.name, var.suffix["platform_folder"])}${var.suffix["sds_project"]}")
   random_project_id = true
   org_id            = var.org_id
-  for_each          = { for k, v in flatten([for b in module.fleet_control_plane_platform : b.ids_list]) : k => v }
-  folder_id         = each.value
+  folder_id         = each.value.id
   billing_account   = var.billing_account_id
-
   activate_apis = [
     "cloudbilling.googleapis.com",
     "storage.googleapis.com"

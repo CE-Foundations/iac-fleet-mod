@@ -7,7 +7,6 @@ terraform {
 }
 
 locals {
-  project_prefix = var.project_prefix == "" ? "" : "${var.project_prefix}-"
   edge_enable_services = [
     "cloudbilling.googleapis.com",
     "anthos.googleapis.com",
@@ -33,6 +32,19 @@ locals {
   fleet_folders = flatten([
     for bd in data.terraform_remote_state.fleet_folders.outputs.fleet_folders : [for f in bd.folders_map : f]
     ])
+
+  fleet_vpn_peer_config_info = flatten([
+    for project in module.control_plane_networking_project:[
+      for cluster in var.fleet_vpn_peer_config:
+        merge(cluster, {project_id = project.project_id})
+        if cluster.fleet ==  trimsuffix(substr(project.project_id, 0, length(project.project_id)-5), var.suffix.network_project)
+  ]])
+
+  # fleet_vpn_peer_config_info = [
+  #   for project in module.control_plane_networking_project:[
+  #     for cluster in var.fleet_vpn_peer_config:
+  #       merge(cluster, {project_id = project.project_id}) if cluster.fleet == trimsuffix(substr(project.project_id, 0, length(project.project_id)-5), var.suffix.network_project)
+  # ]]
 }
 
 // create a folder that houses the fleet control plane and the fleet project. This folder should attach to a region folder.

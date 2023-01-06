@@ -37,23 +37,23 @@ resource "google_compute_ha_vpn_gateway" "ha_gateway" {
   network = module.vpc[each.key].network_id
 }
 
-# # creates external VPN gateway w/ an interface for each peer IP
-# resource "google_compute_external_vpn_gateway" "peer" {
-#   for_each = var.fleet_vpn_peer_config
+# creates external VPN gateway w/ an interface for each peer IP
+resource "google_compute_external_vpn_gateway" "peer" {
+  for_each = {for k, vpn_config in local.fleet_vpn_peer_config_info : k => vpn_config}
 
-#   project         = module.control_plane_networking_project.project_id
-#   name            = each.key
-#   redundancy_type = "TWO_IPS_REDUNDANCY"
-#   description     = "An externally managed VPN gateway"
+  project         = each.value.project_id
+  name            = each.value.name
+  redundancy_type = "TWO_IPS_REDUNDANCY"
+  description     = "An externally managed VPN gateway"
 
-#   dynamic "interface" {
-#     for_each = each.value.peer_ips
-#     content {
-#       id         = interface.key
-#       ip_address = interface.value
-#     }
-#   }
-# }
+  dynamic "interface" {
+    for_each = each.value.peer_ips
+    content {
+      id         = interface.key
+      ip_address = interface.value
+    }
+  }
+}
 
 # # creates and attaches tunnels for each cluster
 # module "tunnels" {
