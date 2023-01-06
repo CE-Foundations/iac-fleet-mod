@@ -139,3 +139,9 @@ variable "fleet_vpn_peer_config" {
     }
   ]
 }
+
+
+variable "fleet_folders" {
+  description = "fleet_folders output from the iac-fleet-org-mod"
+  type = map
+}
