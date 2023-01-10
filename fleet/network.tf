@@ -55,32 +55,32 @@ resource "google_compute_external_vpn_gateway" "peer" {
   }
 }
 
-# # creates and attaches tunnels for each cluster
-# module "tunnels" {
-#   source = "./submodules/tunnels"
+# creates and attaches tunnels for each cluster
+module "tunnels" {
+  source = "./submodules/tunnels"
 
-#   for_each = var.fleet_vpn_peer_config
+  for_each = {for k, vpn_config in local.fleet_vpn_peer_config_info : k => vpn_config}
 
-#   cluster_name  = each.key
-#   project_id    = module.control_plane_networking_project.project_id
-#   region        = var.fleet_vpn_region
-#   router        = google_compute_router.fleet-router.id
-#   vpn_gw        = google_compute_ha_vpn_gateway.ha_gateway.id
-#   peer_gw       = google_compute_external_vpn_gateway.peer[each.key].id
-#   shared_secret = each.value.shared_secret
-# }
+  cluster_name  = each.value.name
+  project_id    = each.value.project_id
+  region        = var.fleet_vpn_region
+  router        = local.fleet_router_config_info[each.value.project_id].id
+  vpn_gw        = local.ha_gateway_config_info[each.value.project_id].id
+  peer_gw       = local.vpn_gateway_peer_info[each.value.name].id
+  shared_secret = each.value.shared_secret
+}
 
 
 # creates router interfaces and bgp peers, one each per tunnel
-# module "bgp" {
-#   source = "./submodules/bgp"
+module "bgp" {
+  source = "./submodules/bgp"
 
-#   for_each = var.fleet_vpn_peer_config
+  for_each = {for k, vpn_config in local.fleet_vpn_peer_config_info : vpn_config.name => vpn_config}
 
-#   cluster_name = each.key
-#   project_id   = module.control_plane_networking_project.project_id
-#   region       = var.fleet_vpn_region
-#   router       = google_compute_router.fleet-router.name
-#   tunnels      = module.tunnels[each.key]
-#   router_ifs   = each.value.router_ips
-# }
+  cluster_name = each.key
+  project_id   = each.value.project_id
+  region       = var.fleet_vpn_region
+  router       = local.fleet_router_config_info[each.value.project_id].name
+  tunnels      = local.tunnels_info[each.value.name]
+  router_ifs   = each.value.router_ips
+}

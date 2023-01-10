@@ -62,7 +62,7 @@ variable "fleet_vpn_peer_config" {
   description = "VPN peers are configurations used by this module enabling an Anthos cluster to attach to an HA VPN gateway"
   default = [
     {
-      name          = "cluster0"
+      name          = "cluster0"             # Cluster name (Unique)
       fleet         = "fleet-1a-001"
       peer_ips      = ["8.8.8.8", "8.8.4.4"] # IPs allowed to connect to this HA VPN gateway
       shared_secret = "foobarbazquux"        # HA VPN shared secret
@@ -100,7 +100,7 @@ variable "fleet_vpn_peer_config" {
       }
     },
     {
-      name          = "cluster0"
+      name          = "cluster2"
       fleet         = "fleet-1a-002"
       peer_ips      = ["8.8.8.8", "8.8.4.4"] # IPs allowed to connect to this HA VPN gateway
       shared_secret = "foobarbazquux"        # HA VPN shared secret
@@ -120,7 +120,7 @@ variable "fleet_vpn_peer_config" {
       }
     },
     {
-      name          = "cluster1"
+      name          = "cluster3"
       fleet         = "fleet-1a-002"
       peer_ips      = ["1.1.1.1", "1.0.0.1"]
       shared_secret = "foobarbazquux"
@@ -138,10 +138,4 @@ variable "fleet_vpn_peer_config" {
       }
     }
   ]
-}
-
-
-variable "fleet_folders" {
-  description = "fleet_folders output from the iac-fleet-org-mod"
-  type = map
 }

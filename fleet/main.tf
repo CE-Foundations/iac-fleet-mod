@@ -30,28 +30,39 @@ locals {
     "storage.googleapis.com"
   ]
   fleet_folders = flatten([
-    for bd in var.fleet_folders : [for f in bd.folders_map : f]
+    for bd in data.terraform_remote_state.fleet_folders.outputs.fleet_folders : [for f in bd.folders_map : f]
     ])
 
   fleet_vpn_peer_config_info = flatten([
-    for project in module.control_plane_networking_project:[
-      for cluster in var.fleet_vpn_peer_config:
+    for project in module.control_plane_networking_project : [
+      for cluster in var.fleet_vpn_peer_config :
         merge(cluster, {project_id = project.project_id})
         if cluster.fleet ==  trimsuffix(substr(project.project_id, 0, length(project.project_id)-5), var.suffix.network_project)
-  ]])
+    ]
+  ])
 
-  # fleet_vpn_peer_config_info = [
-  #   for project in module.control_plane_networking_project:[
-  #     for cluster in var.fleet_vpn_peer_config:
-  #       merge(cluster, {project_id = project.project_id}) if cluster.fleet == trimsuffix(substr(project.project_id, 0, length(project.project_id)-5), var.suffix.network_project)
-  # ]]
+  fleet_router_config_info = {
+    for fleet in google_compute_router.fleet-router : fleet.project => fleet
+  }
+  
+  ha_gateway_config_info = {
+    for ha_gateway in google_compute_ha_vpn_gateway.ha_gateway : ha_gateway.project => ha_gateway
+  }
+
+  vpn_gateway_peer_info = {
+    for vpn_gw_peer in google_compute_external_vpn_gateway.peer : vpn_gw_peer.name => vpn_gw_peer
+  }
+
+  tunnels_info = {
+    for tunnel in module.tunnels : trimsuffix(tunnel.tunnel0.name, "-tunnel0") => tunnel
+  }
 }
 
 // create a folder that houses the fleet control plane and the fleet project. This folder should attach to a region folder.
-# data "terraform_remote_state" "fleet_folders" {
-#   backend = "gcs"
-#   config = {
-#     bucket = "ce-tf-backend"
-#     prefix = "terraform/state/generic/3-org-structure/"
-#   }
-# }
+data "terraform_remote_state" "fleet_folders" {
+  backend = "gcs"
+  config = {
+    bucket = "ce-tf-backend"
+    prefix = "terraform/state/generic/3-org-structure/"
+  }
+}
