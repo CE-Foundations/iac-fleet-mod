@@ -20,8 +20,8 @@ variable "suffix" {
   default = {
     control_plane_folder  = "-control-plane"
     network_project       = "-network"
-    observability_folder  = "-observability"
-    observability_project = "-observability"
+    observability_folder  = "-o11y"
+    observability_project = "-o11y"
     platform_folder       = "-platform"
     sa_project            = "-svc-accts"
     sds_project           = "-sds"

@@ -54,7 +54,7 @@ locals {
   }
 
   tunnels_info = {
-    for tunnel in module.tunnels : trimsuffix(tunnel.tunnel0.name, "-tunnel0") => tunnel
+    for tunnel in module.tunnels : tunnel.cluster => tunnel
   }
 }
 
