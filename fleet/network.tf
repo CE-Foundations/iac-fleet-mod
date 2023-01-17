@@ -53,7 +53,9 @@ resource "google_compute_external_vpn_gateway" "peer" {
       ip_address = interface.value
     }
   }
-
+  depends_on = [
+    module.control_plane_networking_project
+  ]
 }
 
 # creates and attaches tunnels for each cluster
@@ -69,6 +71,10 @@ module "tunnels" {
   vpn_gw        = local.ha_gateway_config_info[each.value.project_id].id
   peer_gw       = local.vpn_gateway_peer_info[each.value.name].id
   shared_secret = each.value.shared_secret
+  
+  depends_on = [
+    module.control_plane_networking_project
+  ]
 }
 
 
@@ -84,4 +90,8 @@ module "bgp" {
   router       = local.fleet_router_config_info[each.value.project_id].name
   tunnels      = local.tunnels_info[each.value.name]
   router_ifs   = each.value.router_ips
+
+  depends_on = [
+    module.control_plane_networking_project
+  ]
 }
