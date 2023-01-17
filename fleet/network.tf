@@ -53,6 +53,7 @@ resource "google_compute_external_vpn_gateway" "peer" {
       ip_address = interface.value
     }
   }
+
 }
 
 # creates and attaches tunnels for each cluster
