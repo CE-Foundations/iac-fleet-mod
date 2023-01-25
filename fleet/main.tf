@@ -64,7 +64,7 @@ locals {
 data "terraform_remote_state" "fleet_folders" {
   backend = "gcs"
   config = {
-    bucket = "ce-tf-backend"
+    bucket = var.tf_state_bucket
     prefix = "terraform/state/generic/iac-fleet-org-mod"
   }
 }

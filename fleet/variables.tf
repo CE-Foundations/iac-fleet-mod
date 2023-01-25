@@ -3,6 +3,12 @@ variable "org_id" {
   type        = string
 }
 
+// Bucket name from which the data from previous steps will be collected (like folder_ids)
+variable "tf_state_bucket" {
+  type    = string
+  default = "ce-tf-backend"
+}
+
 variable "suffix" {
   description = "suffixes used for folders and projects"
   type = object({
@@ -57,6 +63,8 @@ variable "fleet_vpn_router_bgp_asn" {
   type    = string
   default = "64519"
 }
+
+
 
 variable "fleet_vpn_peer_config" {
   description = "VPN peers are configurations used by this module enabling an Anthos cluster to attach to an HA VPN gateway"
