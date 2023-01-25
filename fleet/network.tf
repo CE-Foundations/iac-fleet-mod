@@ -95,3 +95,19 @@ module "bgp" {
     module.control_plane_networking_project
   ]
 }
+
+
+
+locals {
+  fleet_vpn_peer_config_info = flatten([
+    for project in module.control_plane_networking_project : [
+      for cluster in var.fleet_vpn_peer_config :
+      merge(cluster, { project_id = project.project_id })
+      if cluster.fleet == trimsuffix(substr(project.project_id, 0, length(project.project_id) - 5), var.suffix.network_project)
+    ]
+  ])
+
+  tunnels_info = {
+    for tunnel in module.tunnels : tunnel.cluster => tunnel
+  }
+}
