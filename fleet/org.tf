@@ -5,7 +5,6 @@ module "fleet_controlPlane" {
   for_each = { for k, v in local.fleet_folders : k => v }
   parent   = each.value["id"]
   names    = ["${each.value["display_name"]}${var.suffix["control_plane_folder"]}"]
-
 }
 
 // below folders nest under fleet-control-plane

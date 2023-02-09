@@ -11,6 +11,10 @@ module "vpc" {
 
   subnets = [var.fleet_subnet]
   # secondary_ranges = local.restricted_vpc_secondary_ranges
+
+  depends_on = [
+    module.control_plane_networking_project
+  ]
 }
 
 # cloud router supporting the fleet internal VPN gateway
@@ -25,6 +29,10 @@ resource "google_compute_router" "fleet-router" {
   bgp {
     asn = var.fleet_vpn_router_bgp_asn
   }
+
+  depends_on = [
+    module.control_plane_networking_project
+  ]
 }
 
 # creates the internal VPN gateway
@@ -35,11 +43,15 @@ resource "google_compute_ha_vpn_gateway" "ha_gateway" {
   name    = "fleet-gw-${var.fleet_vpn_region}"
   region  = var.fleet_vpn_region
   network = module.vpc[each.key].network_id
+
+  depends_on = [
+    module.control_plane_networking_project
+  ]
 }
 
 # creates external VPN gateway w/ an interface for each peer IP
 resource "google_compute_external_vpn_gateway" "peer" {
-  for_each = {for k, vpn_config in local.fleet_vpn_peer_config_info : k => vpn_config}
+  for_each = {for index, config in local.fleet_vpn_peer_config_info : config.name => config}
 
   project         = each.value.project_id
   name            = each.value.name
